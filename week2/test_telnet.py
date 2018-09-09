@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """
-Write a script that connects to the lab pynet-rtr1, logins, and executes the
-'show ip int brief' command.
+Convert the code from exercise2 to a class-based solution
 
 This program is meaningfully more complicated in PY3, than PY2. Also it
 is more complicated if you need both PY2 and PY3 compatibility.
@@ -43,55 +42,58 @@ def write_bytes(out_data):
     raise ValueError(msg)
 
 
-def write_channel(remote_conn, data):
-    """Handle the PY2/PY3 differences to write data out to the device."""
-    remote_conn.write(write_bytes(data))
+class TelnetConn(object):
+    """Establish and manage telnet connection to network devices."""
+    def __init__(self, ip_addr, username, password):
+        self.ip_addr = ip_addr
+        self.username = username
+        self.password = password
 
+        try:
+            self.remote_conn = telnetlib.Telnet(self.ip_addr, TELNET_PORT, TELNET_TIMEOUT)
+        except socket.timeout:
+            sys.exit("Connection timed-out")
 
-def read_channel(remote_conn):
-    """Handle the PY2/PY3 differences to write data out to the device."""
-    return remote_conn.read_very_eager().decode('utf-8', 'ignore')
+    def write_channel(self, data):
+        """Handle the PY2/PY3 differences to write data out to the device."""
+        self.remote_conn.write(write_bytes(data))
 
+    def read_channel(self):
+        """Handle the PY2/PY3 differences to write data out to the device."""
+        return self.remote_conn.read_very_eager().decode('utf-8', 'ignore')
 
-def telnet_connect(ip_addr):
-    """Establish telnet connection."""
-    try:
-        return telnetlib.Telnet(ip_addr, TELNET_PORT, TELNET_TIMEOUT)
-    except socket.timeout:
-        sys.exit("Connection timed-out")
+    def login(self):
+        """Login to network device."""
+        output = self.remote_conn.read_until(b"sername:", TELNET_TIMEOUT).decode('utf-8', 'ignore')
+        self.write_channel(self.username + '\n')
+        output += self.remote_conn.read_until(b"ssword:", TELNET_TIMEOUT).decode('utf-8', 'ignore')
+        self.write_channel(self.password + '\n')
+        time.sleep(1)
+        return output
 
+    def send_command(self, cmd="\n", sleep_time=1):
+        """
+        Send a command down the telnet channel
 
-def login(remote_conn, username, password):
-    """Login to network device."""
-    output = remote_conn.read_until(b"sername:", TELNET_TIMEOUT).decode('utf-8', 'ignore')
-    write_channel(remote_conn, username + '\n')
-    output += remote_conn.read_until(b"ssword:", TELNET_TIMEOUT).decode('utf-8', 'ignore')
-    write_channel(remote_conn, password + '\n')
-    return output
+        Return the response
+        """
+        cmd = cmd.rstrip()
+        self.write_channel(cmd + '\n')
+        time.sleep(sleep_time)
+        return self.read_channel()
 
+    def disable_paging(self, paging_cmd='terminal length 0'):
+        """Disable the paging of output."""
+        return self.send_command(paging_cmd)
 
-def disable_paging(remote_conn, paging_cmd='terminal length 0'):
-    """Disable the paging of output (i.e. --More--)."""
-    return send_command(remote_conn, paging_cmd)
-
-
-def send_command(remote_conn, cmd):
-    """
-    Send a command down the telnet channel.
-
-    Return the response
-    """
-    cmd = cmd.rstrip()
-    write_channel(remote_conn, cmd + '\n')
-    time.sleep(1)
-    return read_channel(remote_conn)
+    def close_conn(self):
+        """Close telnet connection"""
+        self.remote_conn.close()
+        self.remote_conn = None
 
 
 def main():
-    """
-    Write a script that connects to the lab pynet-rtr1, logins, and executes the
-    'show ip int brief' command.
-    """
+    """Convert the code from exercise2 to a class-based solution."""
     try:
         ip_addr = raw_input("IP address: ")
     except NameError:
@@ -100,20 +102,17 @@ def main():
     username = 'pyclass'
     password = getpass.getpass()
 
-    remote_conn = telnet_connect(ip_addr)
-    output = login(remote_conn, username, password)
-
-    time.sleep(1)
-    read_channel(remote_conn)
-    disable_paging(remote_conn)
-
-    output = send_command(remote_conn, 'show ip int brief')
+    my_conn = TelnetConn(ip_addr, username, password)
+    my_conn.login()
+    my_conn.send_command()
+    my_conn.disable_paging()
+    output = my_conn.send_command('show ip int brief')
 
     print("\n\n")
     print(output)
     print("\n\n")
 
-    remote_conn.close()
+    my_conn.close_conn()
 
 
 if __name__ == "__main__":
