@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-"""
-Convert the code from exercise2 to a class-based solution
-
-This program is meaningfully more complicated in PY3, than PY2. Also it
-is more complicated if you need both PY2 and PY3 compatibility.
-"""
 from __future__ import print_function, unicode_literals
 
 import telnetlib
@@ -18,16 +12,6 @@ TELNET_TIMEOUT = 6
 
 
 def write_bytes(out_data):
-    """Write Python2 and Python3 compatible byte stream.
-
-    This is a bit compliated :-(
-
-    It basically ensures that the unicode in your program is always encoded into an UTF-8 byte
-    stream in the proper way (when bytes are written out to the network).
-
-    Or worded another way, Unicode in the program is in the idealized unicode code points, and
-    when you write it out to the network it needs represented a certain way (encoded).
-    """
     if sys.version_info[0] >= 3:
         if isinstance(out_data, type(u'')):
             return out_data.encode('utf-8')

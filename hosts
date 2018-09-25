@@ -1,0 +1,29 @@
+[all:vars]
+ansible_connection=local
+ansible_python_interpreter=/home/gdykeman/VENV/ansible/bin/python
+ansible_user=pyclass
+ansible_ssh_pass=88newclass
+
+[local]
+localhost ansible_connection=local
+
+[arista]
+pynet-sw1 ansible_host=arista1.twb-tech.com
+pynet-sw2 ansible_host=arista2.twb-tech.com
+pynet-sw3 ansible_host=arista3.twb-tech.com
+pynet-sw4 ansible_host=arista4.twb-tech.com
+
+[arista:vars]
+eapi_port=443
+
+[cisco]
+pynet-rtr1 ansible_host=cisco1.twb-tech.com
+#184.105.247.70
+pynet-rtr2 ansible_host=cisco2.twb-tech.com
+
+[juniper]
+srx1 ansible_host=srx1.twb-tech.com
+
+[nxos]
+nxos1 ansible_host=nxos1.twb-tech.com
+nxos2 ansible_host=nxos2.twb-tech.com
