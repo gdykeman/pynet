@@ -29,14 +29,15 @@ def send_command(remote_conn, cmd='', delay=1):
 
 def main():
     #Use Paramiko to retrieve the entire 'show version' output
-    try:
-        ip_addr = raw_input("Enter IP Address: ")
-    except NameError:
-        ip_addr = input("Enter IP Address: ")
+    # try:
+    #     ip_addr = raw_input("Enter IP Address: ")
+    # except NameError:
+    #     ip_addr = input("Enter IP Address: ")
 
     username = 'pyclass'
     password = '88newclass'
     port = 22
+    ip_addr = 'cisco2.twb-tech.com'
 
     remote_conn_pre = paramiko.SSHClient()
     remote_conn_pre.load_system_host_keys()
@@ -49,7 +50,12 @@ def main():
     clear_buffer(remote_conn)
     disable_paging(remote_conn)
 
-    output = send_command(remote_conn, cmd='show version')
+    send_command(remote_conn, cmd='conf t')
+    send_command(remote_conn, cmd='logging buffered 20000')
+    send_command(remote_conn, cmd='end')
+
+    output = send_command(remote_conn, cmd='show run | i logging', delay=2)
+
     print('\n>>>>')
     print(output)
     print('\n>>>>')
